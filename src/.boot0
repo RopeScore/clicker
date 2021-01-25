@@ -1,7 +1,7 @@
 // config
-const SSID = ''
-const PASSWORD = ''
-const HOST = ''
+const SSID = 'Bengtsons'
+const PASSWORD = '46322432'
+const HOST = '1b211b365da6.ngrok.io'
 const PORT = 80
 
 // modules
@@ -24,6 +24,7 @@ const renderVars = {
 }
 
 function renderCount () {
+  // function clearRect (x1, y1, x2, y2)
   g.clearRect(0, 0, 128, 42)
   g.setFontVector(40)
   g.drawString(renderVars.count.toString(), 2, 2)
@@ -48,33 +49,21 @@ function connectWiFi () {
   })
 }
 
-Wifi.on('disconnected', function () {
+wifi.on('disconnected', function () {
   renderVars.connectionStatus = 'conn lost'
   renderStatus()
 })
 
-Wifi.on('connected', function () {
+wifi.on('connected', function () {
   renderVars.connectionStatus = wifi.getIP().ip
   renderStatus()
   connectWs()
 })
 
-connectWiFi()
-
 // WS
 let ws
 let msgId = 0
 const sendQ = []
-function connectWs () {
-  ws = new WebSocket(HOST, {
-    port: PORT,
-    path: '/ws'
-  })
-
-  ws.on('open', register)
-  ws.on('close', register)
-  ws.on('message', handleMsg)
-}
 
 function register () {
   renderVars.connectionStatus = 'register'
@@ -95,6 +84,25 @@ function handleMsg (message) {
   }
 }
 
+function connectWs () {
+  ws = new WebSocket(HOST, {
+    port: PORT,
+    path: '/ws'
+  })
+
+  ws.on('open', register)
+  ws.on('close', register)
+  ws.on('message', handleMsg)
+}
+
+wifi.getStatus(function (status) {
+  if (status.station !== 'connected') connectWiFi()
+  else {
+    renderVars.connectionStatus = wifi.getIP().ip
+    renderStatus()
+    connectWs()
+  }
+})
 
 // Button
 pinMode(D25, 'input_pullup')
