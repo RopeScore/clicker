@@ -4,19 +4,13 @@ TTGO esp32 OLED 18650 based hardware clicker for rope skipping
 
 ## Setup
 
-Install micropython on the esp32 and transfer the files to it
-see http://docs.micropython.org/en/latest/esp32/tutorial/intro.html#esp32-intro
-and https://forums.4fips.com/viewtopic.php?f=3&t=6905 but tl;dr;
+Install espruino on the esp32 and transfer the files to it
 
-Download the latest stable micropython bin from
-https://micropython.org/download/esp32/
+Download the latest stable espruino bins from
+http://www.espruino.com/Download flash according to
+https://www.espruino.com/ESP32#flashing-a-name-firmware-updates-a-
 
-```console
-$ pip install -r requirements.txt
-$ # not specifying a --port means it'll do it on whatever esp32 it can find
-$ # it'll also snitch which port it uses for future reference
-$ esptool.py erase_flash
-$ esptool.py --chip esp32 write_flash -z 0x1000 esp32.bin
-$ ampy --port COM3 put ssd1306.py
-$ ampy --port COM3 put main.py
-```
+
+## Modules
+
+Files in `espruino_modules/` comes from `https://www.espruino.com/modules/${name}.min.js`

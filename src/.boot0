@@ -1,0 +1,108 @@
+// config
+const SSID = ''
+const PASSWORD = ''
+const HOST = ''
+const PORT = 80
+
+// modules
+const wifi = require('Wifi')
+const WebSocket = require('ws')
+
+// screen setup
+// size: 128x64
+I2C1.setup({ scl: D4, sda: D5 })
+const g = require('SSD1306').connect(I2C1)
+g.clear()
+g.setRotation(2 /* 180deg */)
+g.flip()
+
+const renderVars = {
+  count: 0,
+  connectionStatus: 'conn...',
+  id: '000000',
+  battery: 1
+}
+
+function renderCount () {
+  g.clearRect(0, 0, 128, 42)
+  g.setFontVector(40)
+  g.drawString(renderVars.count.toString(), 2, 2)
+  g.flip()
+}
+
+function renderStatus () {
+  g.clearRect(0, 54, 128, 64)
+  g.setFontVector(10)
+  g.drawString(renderVars.connectionStatus, 2, 54)
+  g.drawString('#' + renderVars.id, 84, 54)
+  g.flip()
+}
+
+renderCount()
+renderStatus()
+
+// WiFi
+function connectWiFi () {
+  wifi.connect(SSID, { password: PASSWORD }, function () {
+    wifi.save()
+  })
+}
+
+Wifi.on('disconnected', function () {
+  renderVars.connectionStatus = 'conn lost'
+  renderStatus()
+})
+
+Wifi.on('connected', function () {
+  renderVars.connectionStatus = wifi.getIP().ip
+  renderStatus()
+  connectWs()
+})
+
+connectWiFi()
+
+// WS
+let ws
+let msgId = 0
+const sendQ = []
+function connectWs () {
+  ws = new WebSocket(HOST, {
+    port: PORT,
+    path: '/ws'
+  })
+
+  ws.on('open', register)
+  ws.on('close', register)
+  ws.on('message', handleMsg)
+}
+
+function register () {
+  renderVars.connectionStatus = 'register'
+  renderVars.id = '000000'
+  renderStatus()
+  ws.send('REGISTER')
+}
+
+function handleMsg (message) {
+  let args = message.split(' ')
+  switch (args[0]) {
+    case 'REGISTERED':
+      renderVars.id = args[1]
+      renderStatus()
+      break
+    case 'SCORED':
+      break
+  }
+}
+
+
+// Button
+pinMode(D25, 'input_pullup')
+
+setWatch(function (e) {
+  renderVars.count++
+  msgId++
+  renderCount()
+  sendQ.push([msgId, `SCORED ${msgId} ${Date.now() | 0} ${renderVars.count}`])
+  console.log(sendQ)
+}, D25, { repeat: true, edge: 'falling', debounce: 10 })
