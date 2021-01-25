@@ -1,7 +1,7 @@
 // config
-const SSID = 'Bengtsons'
-const PASSWORD = '46322432'
-const HOST = '1b211b365da6.ngrok.io'
+const SSID = ''
+const PASSWORD = ''
+const HOST = ''
 const PORT = 80
 
 // modules
@@ -19,7 +19,7 @@ g.flip()
 const renderVars = {
   count: 0,
   connectionStatus: 'conn...',
-  id: '000000',
+  id: '------',
   battery: 1
 }
 
@@ -67,19 +67,22 @@ const sendQ = []
 
 function register () {
   renderVars.connectionStatus = 'register'
-  renderVars.id = '000000'
+  renderVars.id = '------'
   renderStatus()
   ws.send('REGISTER')
 }
 
 function handleMsg (message) {
+  console.log(message)
   let args = message.split(' ')
   switch (args[0]) {
     case 'REGISTERED':
       renderVars.id = args[1]
+      renderVars.connectionStatus = 'ok'
       renderStatus()
       break
     case 'SCORED':
+      sendQ.splice(sendQ.findIndex(function (el) { return el[0] == args[1] }), 1)
       break
   }
 }
@@ -95,14 +98,8 @@ function connectWs () {
   ws.on('message', handleMsg)
 }
 
-wifi.getStatus(function (status) {
-  if (status.station !== 'connected') connectWiFi()
-  else {
-    renderVars.connectionStatus = wifi.getIP().ip
-    renderStatus()
-    connectWs()
-  }
-})
+connectWiFi()
+// connectWs()
 
 // Button
 pinMode(D25, 'input_pullup')
@@ -111,6 +108,7 @@ setWatch(function (e) {
   renderVars.count++
   msgId++
   renderCount()
-  sendQ.push([msgId, `SCORED ${msgId} ${Date.now() | 0} ${renderVars.count}`])
-  console.log(sendQ)
+  sendQ.push([msgId, `SCORE ${msgId} ${Date.now() | 0} ${renderVars.count}`])
+  ws.send(`SCORE ${msgId} ${Date.now() | 0} ${renderVars.count}`)
+  // console.log(sendQ)
 }, D25, { repeat: true, edge: 'falling', debounce: 10 })
